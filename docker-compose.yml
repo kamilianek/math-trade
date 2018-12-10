@@ -1,0 +1,62 @@
+version: '2'
+
+networks:
+    network1:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 10.5.0.0/16
+                  gateway: 10.5.0.1
+
+volumes:
+    mysql_data:
+services:
+
+
+    math-trade-python:
+        container_name: math-trade-python
+        build: https://github.com/piotrgajdzica/math-trade-solver.git
+        image: math-trade-python:latest
+        networks:
+            network1:
+                ipv4_address: 10.5.0.5
+        logging:
+            driver: json-file
+        expose:
+            - 5000
+        ports:
+            - 5000:5000
+    math-trade-mysql:
+        image: mysql
+        container_name: math-trade-mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: "fb&%423&^&gjfFS"
+            MYSQL_USER: "MathandelUser"
+            MYSQL_PASSWORD: "MathandelRulez"
+            MYSQL_DATABASE: "dbMathandel"
+        volumes:
+            - mysql_data:/var/lib/mysql-3
+        expose:
+            - 6603
+        ports:
+            - 6603:3306
+        restart: always
+        networks:
+            network1:
+                ipv4_address: 10.5.0.4
+    math-trade-backend:
+        container_name: math-trade-backend
+        depends_on:
+            - math-trade-mysql
+            - math-trade-python
+        build: https://github.com/Kubster96/MathandelBackend.git
+        image: math-trade-backend:latest
+        expose:
+            - 8080
+        ports:
+            - 8080:8080
+        networks:
+            network1:
+                ipv4_address: 10.5.0.6
+        logging:
+            driver: json-file
